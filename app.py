@@ -4,13 +4,15 @@ import base64
 import requests
 import json
 from flask import Flask, request, jsonify, send_file, send_from_directory, render_template_string
-from google import genai
-from google.genai import types
+
+# Correct import for google-generativeai
+import google.generativeai as genai
+from google.generativeai import types
 
 app = Flask(__name__)
 
 # Serve generic profile template and pass UIID to frontend
-profile_template_html = '''
+profile_template_html = r'''
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -668,4 +670,6 @@ if __name__ == "__main__":
         print("WARNING: Gemini API is not working. Blog generation will use fallback content.")
     
     app.run(debug=True)
+
+
 
