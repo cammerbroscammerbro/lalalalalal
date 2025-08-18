@@ -499,29 +499,15 @@ def generate_ai_blog(profile_data):
     print(f"Using API key: {API_KEY[:10]}...")
     
     try:
-        client = genai.Client(api_key=API_KEY)
-        model = "gemini-2.5-pro"
-        contents = [
-            types.Content(
-                role="user",
-                parts=[types.Part.from_text(text=prompt)],
-            ),
-        ]
-        
+        genai.configure(api_key=API_KEY)
+        model = genai.GenerativeModel("gemini-2.5-pro")
         print("Calling Gemini API...")
-        blog_text = ""
-        for chunk in client.models.generate_content_stream(
-            model=model,
-            contents=contents,
-        ):
-            blog_text += chunk.text
-        
+        response = model.generate_content(prompt)
+        blog_text = response.text if hasattr(response, 'text') else str(response)
         print(f"Gemini response received: {len(blog_text)} characters")
         print(f"Response preview: {blog_text[:200]}...")
-        
         # Clean the response to extract only JSON
         cleaned_text = clean_json_response(blog_text)
-        
         # Parse and refine JSON response
         try:
             blog_json = json.loads(cleaned_text)
@@ -530,12 +516,9 @@ def generate_ai_blog(profile_data):
             print(f"JSON parsing failed: {json_error}")
             print("Falling back to text extraction...")
             blog_json = extract_blog_parts(blog_text)
-        
         blog_json = refine_blog(blog_json, fallback_author=profile_data.get('name', ''))
         print(f"Final blog content: {blog_json.get('title', 'No title')}")
-        
         return blog_json
-        
     except Exception as e:
         print(f"Exception in generate_ai_blog: {str(e)}")
         print("Returning fallback content...")
@@ -668,5 +651,6 @@ if __name__ == "__main__":
         print("WARNING: Gemini API is not working. Blog generation will use fallback content.")
     
     app.run(debug=True)
+
 
 
