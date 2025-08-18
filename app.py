@@ -5,6 +5,7 @@ import requests
 import json
 from flask import Flask, request, jsonify, send_file, send_from_directory, render_template_string
 
+# Correct import for google-generativeai
 import google.generativeai as genai
 from google.generativeai import types
 
@@ -92,8 +93,7 @@ import base64
 import requests
 import json
 from flask import Flask, request, jsonify, send_file, send_from_directory
-from google import genai
-from google.genai import types
+ # Removed incorrect import statements for google.generativeai
 
 API_KEY = "AIzaSyB8WRNReeJkKJfUkmU2WuyztBYFEmNl2Vg"
 DEV_API_KEY = "n51PDg1CMRSWGYFnnWXBfvKV"
@@ -125,8 +125,7 @@ def create_profile():
     blog_content = generate_ai_blog(data)
     blogs_by_uiid[uiid] = blog_content
     return jsonify({
-        'success': True,
-        'uuid': profile_uuid,
+     # Removed incorrect import statements for google.generativeai
         'uiid': uiid,
         'profile_url': f'/profile/{uiid}',
         'blog_url': f'/blog/{uiid}'
@@ -669,6 +668,5 @@ if __name__ == "__main__":
         print("WARNING: Gemini API is not working. Blog generation will use fallback content.")
     
     app.run(debug=True)
-
 
 
