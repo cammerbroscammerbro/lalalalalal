@@ -5,7 +5,6 @@ import requests
 import json
 from flask import Flask, request, jsonify, send_file, send_from_directory, render_template_string
 
-# Correct import for google-generativeai
 import google.generativeai as genai
 from google.generativeai import types
 
