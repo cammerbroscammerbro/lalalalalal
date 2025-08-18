@@ -217,75 +217,30 @@ def generate_blog():
     Other Social Media: {other}
     """
 
-    client = genai.Client(api_key=API_KEY)
-    model = "gemini-2.5-pro"
-    contents = [
-        types.Content(
-            role="user",
-            parts=[
-                types.Part.from_text(text=prompt),
-            ],
-        ),
-    ]
-    # No external tools needed here
-    generate_content_config = types.GenerateContentConfig(
-        thinking_config=types.ThinkingConfig(thinking_budget=-1),
-    )
     try:
-        blog_text = ""
-        for chunk in client.models.generate_content_stream(
-            model=model,
-            contents=contents,
-            config=generate_content_config,
-        ):
-            blog_text += chunk.text
-        # Try to parse the JSON from Gemini's response
-        import json
-        def extract_blog_parts(text):
-            import re
-            title, subtitle, body = '', '', ''
-            # Try to extract using labeled sections
-            title_match = re.search(r'\*\*Title:\*\*\s*(.*?)(\*\*|\n|$)', text)
-            subtitle_match = re.search(r'\*\*Subtitle:\*\*\s*(.*?)(\*\*|\n|$)', text)
-            body_match = re.search(r'\*\*Body:\*\*\s*(.*)', text, re.DOTALL)
-            if title_match:
-                title = title_match.group(1).strip()
-            if subtitle_match:
-                subtitle = subtitle_match.group(1).strip()
-            if body_match:
-                body = body_match.group(1).strip()
-            # Fallback: try to find lines starting with Title/Subtitle/Body
-            if not title:
-                line_title = re.search(r'^Title:\s*(.*)', text, re.MULTILINE)
-                if line_title:
-                    title = line_title.group(1).strip()
-            if not subtitle:
-                line_subtitle = re.search(r'^Subtitle:\s*(.*)', text, re.MULTILINE)
-                if line_subtitle:
-                    subtitle = line_subtitle.group(1).strip()
-            if not body:
-                line_body = re.search(r'^Body:\s*(.*)', text, re.MULTILINE | re.DOTALL)
-                if line_body:
-                    body = line_body.group(1).strip()
-            # If still not found, treat all as body
-            if not title and not subtitle:
-                body = text.strip()
-            return {'title': title or 'No title', 'subtitle': subtitle, 'body': body}
-
+        genai.configure(api_key=API_KEY)
+        model = genai.GenerativeModel("gemini-2.5-pro")
+        print("Calling Gemini API for /generate-blog...")
+        print(f"Prompt being sent:\n{prompt}")
+        response = model.generate_content(prompt)
+        blog_text = response.text if hasattr(response, 'text') else str(response)
+        print(f"Gemini response received: {len(blog_text)} characters")
+        print(f"Response preview: {blog_text[:200]}...")
+        cleaned_text = clean_json_response(blog_text)
         try:
-            blog_json = json.loads(blog_text)
-        except Exception:
+            blog_json = json.loads(cleaned_text)
+            print("Successfully parsed JSON from Gemini")
+        except Exception as json_error:
+            print(f"JSON parsing failed: {json_error}")
+            print("Falling back to text extraction...")
             blog_json = extract_blog_parts(blog_text)
-        # Refine and normalize
         blog_json = refine_blog(blog_json, fallback_author=name)
 
-        # Send to dev.to
         DEV_API_KEY = os.getenv('DEV_API_KEY', 'n51PDg1CMRSWGYFnnWXBfvKV')
         headers = {
             "api-key": DEV_API_KEY,
             "Content-Type": "application/json"
         }
-        # Compose markdown body (add subtitle if present)
         body_markdown = f"\n### {blog_json.get('title', '')}\n\n"
         if blog_json.get('subtitle'):
             body_markdown += f"**{blog_json['subtitle']}**\n\n"
@@ -308,6 +263,9 @@ def generate_blog():
 
         return jsonify({"blog": blog_json, "dev": dev_result})
     except Exception as e:
+        import traceback
+        print(f"Exception in /generate-blog: {str(e)}")
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 ##def publish_to_dev_to(blog_content, author_name):#
@@ -506,6 +464,7 @@ def generate_ai_blog(profile_data):
         genai.configure(api_key=API_KEY)
         model = genai.GenerativeModel("gemini-2.5-pro")
         print("Calling Gemini API...")
+        print(f"Prompt being sent:\n{prompt}")
         response = model.generate_content(prompt)
         blog_text = response.text if hasattr(response, 'text') else str(response)
         print(f"Gemini response received: {len(blog_text)} characters")
@@ -524,7 +483,9 @@ def generate_ai_blog(profile_data):
         print(f"Final blog content: {blog_json.get('title', 'No title')}")
         return blog_json
     except Exception as e:
+        import traceback
         print(f"Exception in generate_ai_blog: {str(e)}")
+        traceback.print_exc()
         print("Returning fallback content...")
         return {
             'title': f"Meet {profile_data.get('name', 'This Person')}",
