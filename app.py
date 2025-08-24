@@ -8,6 +8,16 @@ from flask import Flask, request, jsonify, send_file, send_from_directory, rende
 # Correct import for google-generativeai
 import google.generativeai as genai
 from google.generativeai import types
+import os
+import base64
+import requests
+import json
+from flask import Flask, request, jsonify, send_file, send_from_directory
+# Removed incorrect import statements for google.generativeai
+
+
+API_KEY = "AIzaSyB8WRNReeJkKJfUkmU2WuyztBYFEmNl2Vg"
+DEV_API_KEY = "n51PDg1CMRSWGYFnnWXBfvKV"
 
 app = Flask(__name__)
 
@@ -88,15 +98,7 @@ profile_template_html = r'''
 def serve_profile(uiid):
         # Pass UIID to frontend template
         return render_template_string(profile_template_html, uiid=uiid)
-import os
-import base64
-import requests
-import json
-from flask import Flask, request, jsonify, send_file, send_from_directory
- # Removed incorrect import statements for google.generativeai
 
-API_KEY = "AIzaSyB8WRNReeJkKJfUkmU2WuyztBYFEmNl2Vg"
-DEV_API_KEY = "n51PDg1CMRSWGYFnnWXBfvKV"
 
 app = Flask(__name__)
 
@@ -115,7 +117,6 @@ def serve_tagme_ui():
 def create_profile():
     """Create a new TagMe.AI profile"""
     data = request.json
-    # Get UIID from form data
     uiid = data.get('uiid', '').lower().strip()
     if not uiid:
         name = data.get('name', '')
@@ -124,15 +125,24 @@ def create_profile():
     profile_uuid = str(uuid.uuid4())
     blog_content = generate_ai_blog(data)
     blogs_by_uiid[uiid] = blog_content
+    # Do NOT save to Firebase in backend
+    profile_data = {
+        'input': data,
+        'output': {
+            'uuid': profile_uuid,
+            'uiid': uiid,
+            'name': data.get('name', ''),
+            'about': data.get('about', ''),
+            'profile_url': f'/profile/{uiid}',
+            'blog': blog_content
+        }
+    }
     return jsonify({
         'success': True,
         'uiid': uiid,
         'profile_url': f'/profile/{uiid}',
         'blog_url': f'/blog/{uiid}',
-        'output': {
-            'uiid': uiid,
-            'blog': blog_content
-        }
+        'output': profile_data['output']
     })
 
 # Route to show the blog for a specific uiid
@@ -219,7 +229,7 @@ def generate_blog():
 
     try:
         genai.configure(api_key=API_KEY)
-        model = genai.GenerativeModel("gemini-2.5-pro")
+        model = genai.GenerativeModel("gemini-2.5-flash-lite")
         print("Calling Gemini API for /generate-blog...")
         print(f"Prompt being sent:\n{prompt}")
         response = model.generate_content(prompt)
@@ -466,7 +476,16 @@ def generate_ai_blog(profile_data):
         print("Calling Gemini API...")
         print(f"Prompt being sent:\n{prompt}")
         response = model.generate_content(prompt)
-        blog_text = response.text if hasattr(response, 'text') else str(response)
+        # Safely extract text from response
+        blog_text = None
+        if hasattr(response, 'candidates') and response.candidates:
+            for candidate in response.candidates:
+                if hasattr(candidate, 'content') and candidate.content.parts:
+                    blog_text = candidate.content.parts[0].text
+                    break
+        if not blog_text:
+            print("Gemini response did not return any valid text. Returning fallback content...")
+            raise ValueError("No valid text returned from Gemini API.")
         print(f"Gemini response received: {len(blog_text)} characters")
         print(f"Response preview: {blog_text[:200]}...")
         # Clean the response to extract only JSON
@@ -490,7 +509,7 @@ def generate_ai_blog(profile_data):
         return {
             'title': f"Meet {profile_data.get('name', 'This Person')}",
             'subtitle': 'A TagMe.AI Digital Identity',
-            'body': f"<p>Welcome to the AI-readable profile of {profile_data.get('name', 'this person')}. This profile is structured for AI systems and search engines to discover and understand.</p>"
+            'body': f"Welcome to the AI-readable profile of {profile_data.get('name', 'this person')}. This profile is structured for AI systems and search engines to discover and understand."
         }
 
 @app.route('/profile/<uiid>')
@@ -587,28 +606,29 @@ def clean_json_response(text):
     return text
 
 def test_gemini_api():
-    """Test if Gemini API is working"""
     try:
         print("Testing Gemini API...")
-        client = genai.Client(api_key=API_KEY)
-        model = "gemini-2.5-pro"
-        contents = [
-            types.Content(
-                role="user",
-                parts=[types.Part.from_text(text="Say 'Hello, Gemini is working!'")],
-            ),
-        ]
-        
-        response = client.models.generate_content(
-            model=model,
-            contents=contents,
-        )
-        
-        print(f"Gemini API test successful: {response.text}")
-        return True
+        genai.configure(api_key=API_KEY)
+        model = genai.GenerativeModel("gemini-2.5-pro")
+        response = model.generate_content("Say 'Hello, Gemini is working!'")
+        # Check if response contains valid candidates and parts
+        if hasattr(response, 'candidates') and response.candidates:
+            for candidate in response.candidates:
+                if hasattr(candidate, 'content') and candidate.content.parts:
+                    print(f"Gemini API test successful: {candidate.content.parts[0].text}")
+                    return True
+        print("Gemini API test failed: No valid content returned.")
+        return False
     except Exception as e:
         print(f"Gemini API test failed: {str(e)}")
         return False
+
+@app.route('/dashbord.html')
+def serve_dashboard():
+    html_path = os.path.join(os.path.dirname(__file__), 'dashbord.html')
+    if not os.path.exists(html_path):
+        return "dashbord.html not found", 404
+    return send_file(html_path)
 
 if __name__ == "__main__":
     # Test Gemini API before starting
@@ -616,8 +636,6 @@ if __name__ == "__main__":
         print("WARNING: Gemini API is not working. Blog generation will use fallback content.")
     
     app.run(debug=True)
-
-
 
 
 
