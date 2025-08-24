@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #181818;
             min-height: 100vh;
             color: #333;
         }
@@ -55,10 +55,10 @@
         }
 
         .form-container {
-            background: white;
-            border-radius: 20px;
+            /* background: white; */
+            /* border-radius: 20px; */
             padding: 40px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            /* box-shadow: 0 20px 40px rgba(0,0,0,0.1); */
             margin-bottom: 30px;
         }
 
@@ -129,10 +129,10 @@
         }
 
         .result-container {
-            background: white;
-            border-radius: 20px;
+            /* background: white; */
+            /* border-radius: 20px; */
             padding: 40px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            /* box-shadow: 0 20px 40px rgba(0,0,0,0.1); */
             margin-top: 30px;
         }
 
@@ -274,74 +274,63 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">TagMe.AI</div>
-            <div class="tagline">Your AI-Readable Digital Identity</div>
-            <div class="description">
-                Create a unique, AI-readable digital identity that combines your social media and personal info into one universal profile. 
-                Get your own TagMe UUID and public profile page with machine-readable metadata.
-            </div>
-        </div>
-
-        <div class="features">
-            <div class="feature">
-                <div class="feature-icon">🆔</div>
-                <div class="feature-title">Unique UUID</div>
-                <div>Get your own TagMe UUID for universal identification</div>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">🤖</div>
-                <div class="feature-title">AI-Ready</div>
-                <div>Structured data for AI systems and search engines</div>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">🌐</div>
-                <div class="feature-title">Public Profile</div>
-                <div>Beautiful public page with your digital identity</div>
+            <div class="logo" style="font-family:'Poppins','Segoe UI',Tahoma,Geneva,Verdana,sans-serif;font-size:3.2em;font-weight:800;letter-spacing:2px;color:#fff;text-shadow:0 2px 16px rgba(255,255,255,0.18);">TagMe.AI</div>
+            <div class="tagline" style="font-size:1.5em;font-weight:600;color:#fff;letter-spacing:1px;margin-bottom:18px;">Get known by AI</div>
+            <div class="description" style="font-size:1.08em;color:#e0e0e0;max-width:600px;margin:0 auto 18px auto;line-height:1.6;font-style:italic;">
+                <ul style="list-style: disc; margin-left: 1.2em;">
+                    <li>Use your real name or a name you want AI to recognize.</li>
+                    <li>In "About You", write anything you want AI to know about you.</li>
+                    <li>Be creative, honest, and have fun!</li>
+                </ul>
             </div>
         </div>
 
         <div class="form-container">
-            <h2 class="form-title">Create Your TagMe.AI Profile</h2>
+            <h2 class="form-title">Get known by ai </h2>
             <form id="tagmeForm">
-                <div class="form-group">
-                    <label class="form-label">Full Name *</label>
+                <div class="form-group" id="step-0">
+                    <label class="form-label" style="font-weight:700;color:#fff;font-size:1.15em;letter-spacing:0.5px;text-shadow:0 1px 8px rgba(0,0,0,0.18);">Full Name *</label>
+                    <div style="font-size:0.98em;color:#bbb;margin-bottom:6px;font-style:italic;">This is the name AI will use for you.</div>
                     <input type="text" class="form-input" id="name" required placeholder="Enter your full name">
+                    <button type="button" class="submit-btn" id="nextBtn0">Next</button>
                 </div>
-
-                <div class="form-group">
-                    <label class="form-label">UIID (Unique Identifier) *</label>
-                    <input type="text" class="form-input" id="uiid" required placeholder="e.g., jack.higar (lowercase, no spaces)">
+                <div class="form-group" id="step-1" style="display:none;">
+                    <label class="form-label" style="font-weight:700;color:#fff;font-size:1.15em;letter-spacing:0.5px;text-shadow:0 1px 8px rgba(0,0,0,0.18);">UIID (Unique Identifier) *</label>
                     <small style="color: #666; font-size: 0.9em;">Short unique identifier for your profile URL</small>
+                    <input type="text" class="form-input" id="uiid" required placeholder="e.g., jack.higar (lowercase, no spaces)">
+                    <button type="button" class="submit-btn" id="nextBtn1">Next</button>
                 </div>
-
-                <div class="form-group">
-                    <label class="form-label">About You *</label>
+                <div class="form-group" id="step-2" style="display:none;">
+                    <label class="form-label" style="font-weight:700;color:#fff;font-size:1.15em;letter-spacing:0.5px;text-shadow:0 1px 8px rgba(0,0,0,0.18);">About You *</label>
+                    <div style="font-size:0.98em;color:#bbb;margin-bottom:6px;font-style:italic;">Write anything you want AI to know about you.</div>
                     <textarea class="form-textarea" id="about" required placeholder="Tell us about yourself, what you do, and what you love (max 200 words)"></textarea>
+                    <div style="font-weight:700;color:#888;margin-top:8px;margin-bottom:2px;">Get known by AI</div>
+                    <button type="button" class="submit-btn" id="nextBtn2">Next</button>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" id="step-3" style="display:none;">
                     <label class="form-label">Recent Achievement or Learning</label>
                     <textarea class="form-textarea" id="info" placeholder="What's something you've recently done or learned that you're proud of?"></textarea>
+                    <button type="button" class="submit-btn" id="nextBtn3">Next</button>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" id="step-4" style="display:none;">
                     <label class="form-label">X (Twitter) Handle</label>
                     <input type="text" class="form-input" id="x" placeholder="@username">
+                    <button type="button" class="submit-btn" id="nextBtn4">Next</button>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" id="step-5" style="display:none;">
                     <label class="form-label">Instagram Handle</label>
                     <input type="text" class="form-input" id="instagram" placeholder="@username">
+                    <button type="button" class="submit-btn" id="nextBtn5">Next</button>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" id="step-6" style="display:none;">
                     <label class="form-label">Other Social Media or Website</label>
                     <input type="url" class="form-input" id="other" placeholder="https://your-website.com">
+                    <button type="submit" class="submit-btn" id="submitBtn" style="display:none;">Create My TagMe.AI Profile</button>
                 </div>
-
-                <button type="submit" class="submit-btn" id="submitBtn">
-                    Create My TagMe.AI Profile
-                </button>
             </form>
         </div>
 
@@ -405,67 +394,47 @@
                 }
             });
 
+            // Step navigation logic
+            const totalSteps = 7;
+            for (let i = 0; i < totalSteps; i++) {
+                if (i < totalSteps - 1) {
+                    document.getElementById(`nextBtn${i}`).addEventListener('click', function() {
+                        document.getElementById(`step-${i}`).style.display = 'none';
+                        document.getElementById(`step-${i+1}`).style.display = 'block';
+                        // Show submit only on last step
+                        if (i+1 === totalSteps-1) {
+                            document.getElementById('submitBtn').style.display = 'inline-block';
+                        }
+                    });
+                }
+            }
+
+            // Show submit only on last step
             document.getElementById('tagmeForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const submitBtn = document.getElementById('submitBtn');
-                const loadingContainer = document.getElementById('loadingContainer');
-                const resultContainer = document.getElementById('resultContainer');
                 submitBtn.disabled = true;
-                loadingContainer.style.display = 'block';
-                resultContainer.style.display = 'none';
-
                 // Collect form data
+                const name = document.getElementById('name').value.trim();
+                const about = document.getElementById('about').value.trim();
+                if (!name || !about) {
+                    alert('Please fill in your Name and About fields before submitting.');
+                    submitBtn.disabled = false;
+                    return;
+                }
                 const formData = {
-                    name: document.getElementById('name').value.trim(),
+                    name: name,
                     uiid: document.getElementById('uiid').value.trim().toLowerCase(),
-                    about: document.getElementById('about').value.trim(),
+                    about: about,
                     info: document.getElementById('info').value.trim(),
                     x: document.getElementById('x').value.trim(),
                     instagram: document.getElementById('instagram').value.trim(),
                     other: document.getElementById('other').value.trim()
                 };
-
-                try {
-                    const response = await fetch('/create-profile', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(formData)
-                    });
-                    const result = await response.json();
-
-                    if (result.success) {
-                        document.getElementById('uiidDisplay').textContent = result.uiid;
-                        document.getElementById('viewBlogBtn').href = result.blog_url;
-                        document.getElementById('viewBlogBtn').style.display = 'inline-block';
-                        resultContainer.style.display = 'block';
-
-                        // Save full blog content to Firebase
-                        const profileData = {
-                            input: formData,
-                            output: {
-                                uuid: result.uuid || '',
-                                uiid: result.uiid || '',
-                                profile_url: result.profile_url || '',
-                                blog: result.blog || {}, // Save full blog object
-                                // You can add more fields if backend returns SEO/meta info
-                            }
-                        };
-                        // Firebase does not allow . # $ [ ] in keys
-                        const safeUiid = formData.uiid.replace(/[.#$\[\]]/g, '_');
-                        await set(ref(db, 'profiles/' + safeUiid), profileData);
-                    } else {
-                        throw new Error(result.error || 'Failed to create profile');
-                    }
-                } catch (error) {
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'error';
-                    errorDiv.textContent = 'Error: ' + error.message;
-                    document.querySelector('.form-container').appendChild(errorDiv);
-                } finally {
-                    loadingContainer.style.display = 'none';
-                    submitBtn.disabled = false;
-                }
+                // Immediately redirect to dashboard with UIID
+                window.location.href = `/dashbord.html?uiid=${encodeURIComponent(formData.uiid)}`;
             });
         </script>
 </body>
 </html>
+
