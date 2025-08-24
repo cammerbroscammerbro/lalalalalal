@@ -8,13 +8,6 @@ from flask import Flask, request, jsonify, send_file, send_from_directory, rende
 # Correct import for google-generativeai
 import google.generativeai as genai
 from google.generativeai import types
-import os
-import base64
-import requests
-import json
-from flask import Flask, request, jsonify, send_file, send_from_directory
-# Removed incorrect import statements for google.generativeai
-
 
 API_KEY = "AIzaSyB8WRNReeJkKJfUkmU2WuyztBYFEmNl2Vg"
 DEV_API_KEY = "n51PDg1CMRSWGYFnnWXBfvKV"
@@ -98,9 +91,6 @@ profile_template_html = r'''
 def serve_profile(uiid):
         # Pass UIID to frontend template
         return render_template_string(profile_template_html, uiid=uiid)
-
-
-app = Flask(__name__)
 
 # Store blogs by uiid
 blogs_by_uiid = {}
@@ -229,7 +219,7 @@ def generate_blog():
 
     try:
         genai.configure(api_key=API_KEY)
-        model = genai.GenerativeModel("gemini-2.5-flash-lite")
+        model = genai.GenerativeModel("gemini-1.5-flash")
         print("Calling Gemini API for /generate-blog...")
         print(f"Prompt being sent:\n{prompt}")
         response = model.generate_content(prompt)
@@ -278,50 +268,6 @@ def generate_blog():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
-##def publish_to_dev_to(blog_content, author_name):#
-    #"""Publish blog content to DEV.to"""
-    #try:
-        #DEV_API_KEY = os.getenv('DEV_API_KEY', 'n51PDg1CMRSWGYFnnWXBfvKV')
-        #headers = {
-            #"api-key": DEV_API_KEY,
-            #"Content-Type": "application/json"
-        #}
-        
-        # Compose markdown body for DEV.to
-        #body_markdown = f"# {blog_content.get('title', '')}\n\n"
-        #if blog_content.get('subtitle'):
-            #body_markdown += f"*{blog_content['subtitle']}*\n\n"
-        
-        # Convert body to proper markdown format
-        #body_text = blog_content.get('body', '')
-        # Ensure proper paragraph breaks for markdown
-        #body_text = body_text.replace('\n\n', '\n\n')
-        #body_markdown += body_text
-        
-        # Add TagMe.AI signature
-        #body_markdown += f"\n\n---\n\n*This profile was created using [TagMe.AI](https://tagme.ai) - Your AI-Readable Digital Identity*"
-        
-        # Get UIID from blog content for canonical URL
-        #uiid = blog_content.get('uiid', '')
-        #       canonical_url = f"https://fronti.tech/tagmeai/{uiid}" if uiid else ""
-        
-        # Sanitize title for safety (remove code fences/backticks)
-        #safe_title = (blog_content.get('title', f'Meet {author_name} - TagMe.AI Profile') or '').replace('```', '').replace('`', '').strip()
-        #article_data = {
-            #"article": {
-                #"title": safe_title,
-                #"published": True,
-                #"body_markdown": body_markdown,
-                # DEV.to tags must be alphanumeric
-                #"tags": ['ai', 'digitalidentity', 'tagmeai', 'profile'],
-                #"series": 'TagMe AI Profiles',
-                #"canonical_url": canonical_url
-            #}
-        #}
-        
-        #print(f"Publishing to DEV.to with API key: {DEV_API_KEY[:10]}...")
-        #print(f"Article title: {article_data['article']['title']}")
-     
 def extract_blog_parts(text):
     """Parse model text output into a dict with title, subtitle, body."""
     import re
@@ -472,7 +418,7 @@ def generate_ai_blog(profile_data):
     
     try:
         genai.configure(api_key=API_KEY)
-        model = genai.GenerativeModel("gemini-2.5-pro")
+        model = genai.GenerativeModel("gemini-1.5-flash")
         print("Calling Gemini API...")
         print(f"Prompt being sent:\n{prompt}")
         response = model.generate_content(prompt)
@@ -512,55 +458,12 @@ def generate_ai_blog(profile_data):
             'body': f"Welcome to the AI-readable profile of {profile_data.get('name', 'this person')}. This profile is structured for AI systems and search engines to discover and understand."
         }
 
-@app.route('/profile/<uiid>')
-def view_profile(uiid):
-    """View a TagMe.AI profile"""
-    # For now, return a simple profile page
-    # In a full implementation, you'd fetch from database
-    profile_html = f"""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>TagMe.AI Profile - {uiid}</title>
-        <style>
-            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }}
-            .container {{ max-width: 800px; margin: 0 auto; background: white; min-height: 100vh; box-shadow: 0 0 20px rgba(0,0,0,0.1); }}
-            .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 20px; text-align: center; }}
-            .profile-section {{ padding: 40px 20px; }}
-            .uuid-display {{ background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center; border: 2px dashed #667eea; font-family: monospace; }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>TagMe.AI Profile</h1>
-                <p>AI-Readable Digital Identity</p>
-            </div>
-            <div class="profile-section">
-                <div class="uuid-display">
-                    <strong>TagMe UIID:</strong><br>
-                    {uiid}
-                </div>
-                <h2>Profile Information</h2>
-                <p>This is a TagMe.AI profile with AI-readable structured data.</p>
-                <p>Profile data would be loaded from the database in a full implementation.</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-    return profile_html
-
 @app.route('/api/profiles')
 def list_profiles():
     """List all TagMe profiles (for AI directory)"""
     # For now, return empty list
     # In a full implementation, you'd fetch from database
     return jsonify([])
-
-
 
 def generate_uiid_from_name(name):
     """Generate UIID from name"""
@@ -609,7 +512,7 @@ def test_gemini_api():
     try:
         print("Testing Gemini API...")
         genai.configure(api_key=API_KEY)
-        model = genai.GenerativeModel("gemini-2.5-pro")
+        model = genai.GenerativeModel("gemini-1.5-flash")
         response = model.generate_content("Say 'Hello, Gemini is working!'")
         # Check if response contains valid candidates and parts
         if hasattr(response, 'candidates') and response.candidates:
@@ -636,6 +539,3 @@ if __name__ == "__main__":
         print("WARNING: Gemini API is not working. Blog generation will use fallback content.")
     
     app.run(debug=True)
-
-
-
