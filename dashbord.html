@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TagMe.AI Dashboard</title>
+    <style>
+        body {
+            background: #101014;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            position: relative;
+            overflow-x: hidden;
+        }
+        /* Animated gradient background */
+        .animated-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0;
+            background: linear-gradient(120deg, #18181c 0%, #23232b 50%, #18181c 100%);
+            opacity: 0.5;
+            animation: gradientFlow 12s ease-in-out infinite;
+        }
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .container {
+            max-width: 1100px;
+            margin: 48px auto;
+            padding: 32px 24px;
+            background: #18181e;
+            border-radius: 20px;
+            box-shadow: 0 4px 24px 0 rgba(0,0,0,0.18);
+            position: relative;
+            z-index: 1;
+        }
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 32px;
+        }
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+            }
+        }
+        .card {
+            background: #18181e;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+            padding: 28px 22px;
+            margin-bottom: 0;
+            border: 1px solid #23232b;
+            backdrop-filter: blur(6px);
+            transition: box-shadow 0.2s, background 0.2s;
+        }
+        .card:hover {
+            box-shadow: 0 4px 24px #22223b44;
+            background: #20202a;
+        }
+        .id-card {
+            grid-column: 1;
+            grid-row: 1;
+            display: flex;
+            align-items: center;
+            gap: 22px;
+        }
+        .blog-preview-card {
+            grid-column: 2;
+            grid-row: 1;
+        }
+        #fullBlog {
+            grid-column: 1 / span 2;
+            grid-row: 2;
+        }
+        #socialTab {
+            grid-column: 1 / span 2;
+            grid-row: 3;
+        }
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #23232b 0%, #18181e 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.4em;
+            font-weight: 700;
+            color: #fff;
+            box-shadow: 0 2px 8px #22223b22;
+            user-select: none;
+            border: 2px solid #23232b;
+        }
+        .id-info {
+            flex: 1;
+        }
+        .id-uiid {
+            font-size: 1em;
+            color: #a78bfa;
+            font-family: monospace;
+            margin-bottom: 6px;
+        }
+        .id-name {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        .id-about {
+            font-size: 1.08em;
+            color: #b0b0b0;
+        }
+        .logo {
+            font-size: 2.2em;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: #fff;
+            text-shadow: 0 2px 8px rgba(160,140,255,0.10);
+            margin-bottom: 10px;
+        }
+        .success {
+            color: #a78bfa;
+            font-size: 1.2em;
+            margin-bottom: 18px;
+            font-weight: 600;
+        }
+        .loading {
+            text-align: center;
+            color: #a78bfa;
+            margin: 24px 0;
+        }
+        .profile-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #a78bfa 0%, #23232b 100%);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 25px;
+            margin: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .profile-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(160,140,255,0.18);
+        }
+        .side-panel {
+            width: 140px;
+            background: #18181c;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 32px;
+            box-shadow: 2px 0 12px rgba(0,0,0,0.10);
+            border-right: 2px solid #23232b;
+            min-height: 100vh;
+            z-index: 2;
+            transition: width 0.2s;
+        }
+        .side-panel:hover {
+            width: 180px;
+        }
+        .panel-btn {
+            width: 110px;
+            margin: 22px 0;
+            padding: 12px 0;
+            background: #23232b;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.08em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+        .panel-btn:hover {
+            box-shadow: 0 2px 8px #a78bfa44;
+            transform: translateY(-2px) scale(1.03);
+            background: #23233b;
+        }
+        .panel-btn.active {
+            background: linear-gradient(90deg, #23233b 0%, #18181c 100%);
+            color: #fff;
+            box-shadow: 0 2px 8px #a78bfa44;
+            border: 2px solid #23232b;
+        }
+        .panel-btn.active::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 70%;
+            border-radius: 2px;
+            background: linear-gradient(180deg, #a78bfa 0%, #23232b 100%);
+            box-shadow: 0 0 4px #a78bfa44;
+        }
+        .connect-btn {
+            background: linear-gradient(90deg, #23233b 0%, #18181c 100%);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 28px;
+            font-size: 1.08em;
+            font-weight: 700;
+            margin: 12px 0;
+            cursor: pointer;
+            box-shadow: 0 2px 8px #a78bfa22;
+            transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+        }
+        .connect-btn:hover {
+            background: linear-gradient(90deg, #18181c 0%, #23233b 100%);
+            box-shadow: 0 4px 16px #a78bfa22;
+            transform: translateY(-2px) scale(1.03);
+        }
+        h2, h4 {
+            color: #fff;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        p, div, span, a {
+            color: #b0b0b0;
+        }
+    </style>
+</head>
+<body>
+    <div class="animated-bg"></div>
+    <div style="display:flex;min-height:100vh; position:relative; z-index:1;">
+        <div class="side-panel">
+            <div class="panel-logo">☰</div>
+            <button class="panel-btn" id="dashboardBtn"><i class="fa-solid fa-house"></i> Dashboard</button>
+            <button class="panel-btn" id="profileBtn"><i class="fa-solid fa-user"></i> Profile</button>
+            <button class="panel-btn" id="socialBtn"><i class="fa-solid fa-share-nodes"></i> Social Media</button>
+        </div>
+        <div class="container">
+            <div class="logo">TagMe.AI</div>
+            <div class="success" id="successMsg">Your UIID is created!</div>
+            <div class="loading" id="loadingMsg">Creating your AI blog and public profile...</div>
+            <!-- Digital ID Card -->
+            <div class="id-card card" id="idCard" style="display:none;">
+                <div class="avatar" id="avatar"></div>
+                <div class="id-info">
+                    <div class="id-uiid" id="idUiid"></div>
+                    <div class="id-name" id="idName"></div>
+                    <div class="id-about" id="idAbout"></div>
+                </div>
+            </div>
+            <div class="main-content" id="mainContent">
+                <!-- Blog preview box (shown on Dashboard tab) -->
+                <div id="blogPreview" class="blog-preview-card card" style="display:none; cursor:pointer;">
+                    <h2 id="previewTitle"></h2>
+                    <p id="previewSubtitle"></p>
+                    <div id="previewBody"></div>
+                    <span style="color:#667eea; font-weight:bold;">Click to read full blog</span>
+                </div>
+                <!-- Full blog (shown on Profile tab) -->
+                <div id="fullBlog" class="card" style="display:none;">
+                    <h2 id="fullTitle"></h2>
+                    <h4 id="fullSubtitle"></h4>
+                    <div id="fullBody"></div>
+                    <a id="blogLink" href="#" target="_blank" style="display:inline-block; margin-top:20px; color:#667eea; font-weight:bold;">View Public Blog</a>
+                </div>
+                <!-- Social Media tab -->
+                <div id="socialTab" class="tab-content card" style="display:none;">
+                    <div class="social-placeholder">
+                        <h2><i class="fa-brands fa-instagram"></i> Instagram</h2>
+                        <p>Connect your Instagram to share your profile!</p>
+                        <button class="connect-btn">Connect Instagram</button>
+                    </div>
+                    <div class="social-placeholder">
+                        <h2><i class="fa-brands fa-x-twitter"></i> X (Twitter)</h2>
+                        <p>Connect your X account to share your blog!</p>
+                        <button class="connect-btn">Connect X</button>
+                    </div>
+                </div>
+                <!-- Loading spinner -->
+                <div id="loadingSpinner" class="spinner card" style="display:none;">
+                    <i class="fa-solid fa-spinner"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ...existing code... -->
+    <script>
+        // Sidebar tab highlight logic
+        function setActiveTab(tabId) {
+            document.getElementById('dashboardBtn').classList.remove('active');
+            document.getElementById('profileBtn').classList.remove('active');
+            document.getElementById('socialBtn').classList.remove('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+        // Get UIID from query string
+        function getQueryParam(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+        const uiid = getQueryParam('uiid');
+        let blogData = null;
+        let profileData = null;
+
+        // Avatar generator (initials or placeholder)
+        function generateAvatar(name) {
+            if (name && typeof name === 'string' && name.trim().length > 0) {
+                const initials = name.trim().split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+                return `<span>${initials}</span>`;
+            } else {
+                // Placeholder icon
+                return `<i class="fa-solid fa-user"></i>`;
+            }
+        }
+
+        // Show digital ID card
+        function showIdCard(profile) {
+            document.getElementById('idCard').style.display = 'flex';
+            document.getElementById('idUiid').textContent = profile.uiid ? 'UIID: ' + profile.uiid : '';
+            document.getElementById('idName').textContent = profile.name || '';
+            document.getElementById('idAbout').textContent = profile.about || '';
+            document.getElementById('avatar').innerHTML = generateAvatar(profile.name);
+        }
+
+        async function finishProfile() {
+            try {
+                // Call backend to get profile and blog URLs
+                const response = await fetch('/create-profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ uiid })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('loadingMsg').style.display = 'none';
+                    if (result.output && result.output.blog) {
+                        blogData = result.output.blog;
+                        profileData = result.output.profile || { uiid, name: result.output.name, about: result.output.about };
+                        showIdCard(profileData);
+                        showDashboard();
+                    }
+                } else {
+                    document.getElementById('loadingMsg').textContent = 'Error creating profile.';
+                }
+            } catch (err) {
+                document.getElementById('loadingMsg').textContent = 'Error connecting to server.';
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById('blogPreview').style.display = 'block';
+            document.getElementById('fullBlog').style.display = 'none';
+            if (profileData) showIdCard(profileData);
+            document.getElementById('previewTitle').textContent = blogData.title || '';
+            document.getElementById('previewSubtitle').textContent = blogData.subtitle || '';
+            let previewText = (blogData.body || '').slice(0, 300);
+            if ((blogData.body || '').length > 300) previewText += '...';
+            document.getElementById('previewBody').textContent = previewText;
+        }
+
+        function showProfile() {
+            document.getElementById('blogPreview').style.display = 'none';
+            document.getElementById('fullBlog').style.display = 'block';
+            if (profileData) showIdCard(profileData);
+            document.getElementById('fullTitle').textContent = blogData.title || '';
+            document.getElementById('fullSubtitle').textContent = blogData.subtitle || '';
+            document.getElementById('fullBody').innerHTML = (blogData.body || '').replace(/\n/g, '<br>');
+            document.getElementById('blogLink').href = `/blog/${uiid}`;
+        }
+
+        document.getElementById('dashboardBtn').onclick = function() {
+            showDashboard();
+            setActiveTab('dashboardBtn');
+        };
+        document.getElementById('profileBtn').onclick = function() {
+            showProfile();
+            setActiveTab('profileBtn');
+        };
+        document.getElementById('socialBtn').onclick = function() {
+            setActiveTab('socialBtn');
+        };
+        // Set default active tab
+        setActiveTab('dashboardBtn');
+        document.getElementById('blogPreview').onclick = function() {
+            window.location.href = `/blog/${uiid}`;
+        };
+
+        if (uiid) finishProfile();
+    </script>
+</body>
+</html>
