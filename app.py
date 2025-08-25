@@ -3,7 +3,7 @@ import os
 import base64
 import requests
 import json
-from flask import Flask, request, jsonify, send_file, send_from_directory, render_template_string
+from flask import Flask, request, jsonify, send_file, send_from_directory, render_template_string, render_template
 
 # Correct import for google-generativeai
 import google.generativeai as genai
@@ -151,45 +151,18 @@ def show_blog(uiid):
     og_title = meta_title
     og_description = meta_description
     og_url = canonical_url
-    # Render HTML with SEO tags
-    html = f"""
-    <!DOCTYPE html>
-    <html lang='en'>
-    <head>
-        <meta charset='UTF-8'>
-        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-        <title>{meta_title}</title>
-        <meta name='description' content='{meta_description}'>
-        <link rel='canonical' href='{canonical_url}'>
-        <!-- Open Graph -->
-        <meta property='og:title' content='{og_title}'>
-        <meta property='og:description' content='{og_description}'>
-        <meta property='og:url' content='{og_url}'>
-        <meta property='og:type' content='article'>
-        <!-- Twitter Card -->
-        <meta name='twitter:card' content='summary_large_image'>
-        <meta name='twitter:title' content='{og_title}'>
-        <meta name='twitter:description' content='{og_description}'>
-        <style>
-            body {{ font-family:sans-serif; max-width:700px; margin:40px auto; background:#fafbfc; }}
-            .blog-container {{ background:white; border-radius:20px; box-shadow:0 10px 30px rgba(0,0,0,0.07); padding:40px; }}
-            h1 {{ font-size:2.2em; margin-bottom:10px; }}
-            h3 {{ color:#666; margin-bottom:30px; }}
-            .uiid {{ font-size:1em; color:#667eea; margin-bottom:20px; font-family:monospace; }}
-        </style>
-    </head>
-    <body>
-        <div class='blog-container'>
-            <div class='uiid'>UIID: {uiid}</div>
-            <h1>{title}</h1>
-            <h3>{subtitle}</h3>
-            <div style='margin-top:30px;'>{body.replace('\n', '<br>')}</div>
-            <a href='/' style='display:block;margin-top:40px;color:#667eea;'>Back to Profile Form</a>
-        </div>
-    </body>
-    </html>
-    """
-    return html
+
+    return render_template('blog.html',
+                           meta_title=meta_title,
+                           meta_description=meta_description,
+                           canonical_url=canonical_url,
+                           og_title=og_title,
+                           og_description=og_description,
+                           og_url=og_url,
+                           uiid=uiid,
+                           title=title,
+                           subtitle=subtitle,
+                           body=body)
 
 @app.route('/generate-blog', methods=['POST'])
 def generate_blog():
@@ -430,7 +403,11 @@ def generate_ai_blog(profile_data):
                     blog_text = candidate.content.parts[0].text
                     break
         if not blog_text:
-            print("Gemini response did not return any valid text. Returning fallback content...")
+            print("Gemini response did not return any valid text.")
+            try:
+                print(f"Prompt feedback: {response.prompt_feedback}")
+            except Exception as e:
+                print(f"Could not print prompt feedback: {e}")
             raise ValueError("No valid text returned from Gemini API.")
         print(f"Gemini response received: {len(blog_text)} characters")
         print(f"Response preview: {blog_text[:200]}...")

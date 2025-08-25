@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>{{ meta_title }}</title>
+    <meta name='description' content='{{ meta_description }}'>
+    <link rel='canonical' href='{{ canonical_url }}'>
+    <!-- Open Graph -->
+    <meta property='og:title' content='{{ og_title }}'>
+    <meta property='og:description' content='{{ og_description }}'>
+    <meta property='og:url' content='{{ og_url }}'>
+    <meta property='og:type' content='article'>
+    <!-- Twitter Card -->
+    <meta name='twitter:card' content='summary_large_image'>
+    <meta name='twitter:title' content='{{ og_title }}'>
+    <meta name='twitter:description' content='{{ og_description }}'>
+    <style>
+        body { font-family:sans-serif; max-width:700px; margin:40px auto; background:#fafbfc; }
+        .blog-container { background:white; border-radius:20px; box-shadow:0 10px 30px rgba(0,0,0,0.07); padding:40px; }
+        h1 { font-size:2.2em; margin-bottom:10px; }
+        h3 { color:#666; margin-bottom:30px; }
+        .uiid { font-size:1em; color:#667eea; margin-bottom:20px; font-family:monospace; }
+    </style>
+</head>
+<body>
+    <div class='blog-container'>
+        <div class='uiid'>UIID: {{ uiid }}</div>
+        <h1>{{ title }}</h1>
+        <h3>{{ subtitle }}</h3>
+        <div style='margin-top:30px; white-space: pre-wrap;'>{{ body }}</div>
+        <a href='/' style='display:block;margin-top:40px;color:#667eea;'>Back to Profile Form</a>
+    </div>
+</body>
+</html>
