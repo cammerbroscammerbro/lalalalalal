@@ -115,6 +115,12 @@ def create_profile():
     profile_uuid = str(uuid.uuid4())
     blog_content = generate_ai_blog(data)
     blogs_by_uiid[uiid] = blog_content
+
+    print("--- BLOG CONTENT ---")
+    print(blog_content)
+    print(type(blog_content))
+    print("--- END BLOG CONTENT ---")
+
     # Do NOT save to Firebase in backend
     profile_data = {
         'input': data,
@@ -463,6 +469,10 @@ def clean_json_response(text):
     """Clean the response to extract only valid JSON"""
     import re
     
+    # Remove markdown fences
+    text = re.sub(r'^```json\s*', '', text.strip())
+    text = re.sub(r'```\s*$', '', text.strip())
+
     # Try to find JSON object in the text
     json_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
     matches = re.findall(json_pattern, text, re.DOTALL)

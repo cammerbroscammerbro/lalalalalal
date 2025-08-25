@@ -16,12 +16,13 @@
     <meta name='twitter:title' content=''>
     <meta name='twitter:description' content=''>
     <style>
-        body { font-family:sans-serif; max-width:700px; margin:40px auto; background:#fafbfc; }
-        .blog-container { background:white; border-radius:20px; box-shadow:0 10px 30px rgba(0,0,0,0.07); padding:40px; }
-        h1 { font-size:2.2em; margin-bottom:10px; }
-        h3 { color:#666; margin-bottom:30px; }
-        .uiid { font-size:1em; color:#667eea; margin-bottom:20px; font-family:monospace; }
+        body { font-family:sans-serif; max-width:700px; margin:40px auto; background:#181818; color: #e0e0e0; }
+        .blog-container { background:#23232b; border-radius:20px; box-shadow:0 10px 30px rgba(0,0,0,0.07); padding:40px; }
+        h1 { font-size:2.2em; margin-bottom:10px; color: #fff; }
+        h3 { color:#aaa; margin-bottom:30px; }
+        .uiid { font-size:1em; color:#a78bfa; margin-bottom:20px; font-family:monospace; }
         .error { background: #ffebee; color: #c62828; padding: 15px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #c62828; }
+        a { color:#a78bfa; }
     </style>
 </head>
 <body>
@@ -29,7 +30,7 @@
         <div class='uiid'></div>
         <h1></h1>
         <h3></h3>
-        <div style='margin-top:30px; white-space: pre-wrap;'></div>
+        <div id="blogBody" style='margin-top:30px; white-space: pre-wrap;'></div>
         <a href='/' style='display:block;margin-top:40px;color:#667eea;'>Back to Profile Form</a>
     </div>
 
@@ -82,7 +83,7 @@
                 document.querySelector('.uiid').textContent = 'UIID: ' + (data.output.uiid || uiid);
                 document.querySelector('h1').textContent = blog.title || 'No Title';
                 document.querySelector('h3').textContent = blog.subtitle || '';
-                document.querySelector('.blog-container div:nth-of-type(4)').textContent = blog.body || '';
+                document.getElementById('blogBody').textContent = blog.body || '';
 
             } catch (error) {
                 document.querySelector('.blog-container').innerHTML = `<div class="error">Error loading profile: ${error.message}</div>`;

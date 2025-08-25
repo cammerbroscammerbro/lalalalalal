@@ -295,7 +295,23 @@
         </div>
     </div>
     <!-- ...existing code... -->
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBo-iuUmIVgcBYWG8ltWgugkVbfqFUf4wg",
+            authDomain: "fronti-login.firebaseapp.com",
+            databaseURL: "https://fronti-login-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "fronti-login",
+            storageBucket: "fronti-login.firebasestorage.app",
+            messagingSenderId: "403453632821",
+            appId: "1:403453632821:web:7583bc00458748e447ac7c",
+            measurementId: "G-GH16N4RN8S"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
         // Sidebar tab highlight logic
         function setActiveTab(tabId) {
             document.getElementById('dashboardBtn').classList.remove('active');
@@ -333,26 +349,42 @@
         }
 
         async function finishProfile() {
+            const formDataString = sessionStorage.getItem('tagmeFormData');
+            if (!formDataString) {
+                document.getElementById('loadingMsg').textContent = 'Error: No form data found.';
+                return;
+            }
+            const formData = JSON.parse(formDataString);
+
             try {
                 // Call backend to get profile and blog URLs
                 const response = await fetch('/create-profile', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ uiid })
+                    body: JSON.stringify(formData)
                 });
                 const result = await response.json();
                 if (result.success) {
-                    document.getElementById('loadingMsg').style.display = 'none';
-                    if (result.output && result.output.blog) {
-                        blogData = result.output.blog;
-                        profileData = result.output.profile || { uiid, name: result.output.name, about: result.output.about };
-                        showIdCard(profileData);
-                        showDashboard();
-                    }
+                    const safeUiid = result.uiid.replace(/[.#$\[\]]/g, '_');
+                    set(ref(db, 'profiles/' + safeUiid), result.output)
+                        .then(() => {
+                            document.getElementById('loadingMsg').style.display = 'none';
+                            if (result.output && result.output.blog) {
+                                blogData = result.output.blog;
+                                profileData = result.output;
+                                showIdCard(profileData);
+                                showDashboard();
+                            }
+                        })
+                        .catch((error) => {
+                            console.error('Error saving to Firebase:', error);
+                            document.getElementById('loadingMsg').textContent = 'Error saving profile to database.';
+                        });
                 } else {
                     document.getElementById('loadingMsg').textContent = 'Error creating profile.';
                 }
             } catch (err) {
+                console.error('Error:', err);
                 document.getElementById('loadingMsg').textContent = 'Error connecting to server.';
             }
         }
