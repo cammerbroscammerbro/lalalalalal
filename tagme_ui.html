@@ -409,17 +409,20 @@
                 }
             }
 
-            // Show submit only on last step
             document.getElementById('tagmeForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const submitBtn = document.getElementById('submitBtn');
                 submitBtn.disabled = true;
-                // Collect form data
+                document.getElementById('loadingContainer').style.display = 'block';
+                document.getElementById('tagmeForm').style.display = 'none';
+
                 const name = document.getElementById('name').value.trim();
                 const about = document.getElementById('about').value.trim();
                 if (!name || !about) {
                     alert('Please fill in your Name and About fields before submitting.');
                     submitBtn.disabled = false;
+                    document.getElementById('loadingContainer').style.display = 'none';
+                    document.getElementById('tagmeForm').style.display = 'block';
                     return;
                 }
                 const formData = {
@@ -431,10 +434,45 @@
                     instagram: document.getElementById('instagram').value.trim(),
                     other: document.getElementById('other').value.trim()
                 };
-                // Immediately redirect to dashboard with UIID
-                window.location.href = `/dashbord.html?uiid=${encodeURIComponent(formData.uiid)}`;
+
+                try {
+                    const response = await fetch('/create-profile', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(formData),
+                    });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        const safeUiid = result.uiid.replace(/[.#$\[\]]/g, '_');
+                        set(ref(db, 'profiles/' + safeUiid), result.output)
+                            .then(() => {
+                                document.getElementById('loadingContainer').style.display = 'none';
+                                document.getElementById('resultContainer').style.display = 'block';
+                                document.getElementById('uiidDisplay').textContent = result.uiid;
+                                document.getElementById('viewBlogBtn').href = result.blog_url;
+                                document.getElementById('viewBlogBtn').style.display = 'inline-block';
+                            })
+                            .catch((error) => {
+                                console.error('Error saving to Firebase:', error);
+                                alert('An error occurred while saving your profile: ' + error.message);
+                                document.getElementById('loadingContainer').style.display = 'none';
+                                document.getElementById('tagmeForm').style.display = 'block';
+                                submitBtn.disabled = false;
+                            });
+                    } else {
+                        throw new Error(result.error || 'An unknown error occurred.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred: ' + error.message);
+                    document.getElementById('loadingContainer').style.display = 'none';
+                    document.getElementById('tagmeForm').style.display = 'block';
+                    submitBtn.disabled = false;
+                }
             });
         </script>
 </body>
 </html>
-

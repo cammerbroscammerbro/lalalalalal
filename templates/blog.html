@@ -3,33 +3,92 @@
 <head>
     <meta charset='UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-    <title>{{ meta_title }}</title>
-    <meta name='description' content='{{ meta_description }}'>
-    <link rel='canonical' href='{{ canonical_url }}'>
+    <title>Blog</title>
+    <meta name='description' content=''>
+    <link rel='canonical' href=''>
     <!-- Open Graph -->
-    <meta property='og:title' content='{{ og_title }}'>
-    <meta property='og:description' content='{{ og_description }}'>
-    <meta property='og:url' content='{{ og_url }}'>
+    <meta property='og:title' content=''>
+    <meta property='og:description' content=''>
+    <meta property='og:url' content=''>
     <meta property='og:type' content='article'>
     <!-- Twitter Card -->
     <meta name='twitter:card' content='summary_large_image'>
-    <meta name='twitter:title' content='{{ og_title }}'>
-    <meta name='twitter:description' content='{{ og_description }}'>
+    <meta name='twitter:title' content=''>
+    <meta name='twitter:description' content=''>
     <style>
         body { font-family:sans-serif; max-width:700px; margin:40px auto; background:#fafbfc; }
         .blog-container { background:white; border-radius:20px; box-shadow:0 10px 30px rgba(0,0,0,0.07); padding:40px; }
         h1 { font-size:2.2em; margin-bottom:10px; }
         h3 { color:#666; margin-bottom:30px; }
         .uiid { font-size:1em; color:#667eea; margin-bottom:20px; font-family:monospace; }
+        .error { background: #ffebee; color: #c62828; padding: 15px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #c62828; }
     </style>
 </head>
 <body>
     <div class='blog-container'>
-        <div class='uiid'>UIID: {{ uiid }}</div>
-        <h1>{{ title }}</h1>
-        <h3>{{ subtitle }}</h3>
-        <div style='margin-top:30px; white-space: pre-wrap;'>{{ body }}</div>
+        <div class='uiid'></div>
+        <h1></h1>
+        <h3></h3>
+        <div style='margin-top:30px; white-space: pre-wrap;'></div>
         <a href='/' style='display:block;margin-top:40px;color:#667eea;'>Back to Profile Form</a>
     </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBo-iuUmIVgcBYWG8ltWgugkVbfqFUf4wg",
+            authDomain: "fronti-login.firebaseapp.com",
+            databaseURL: "https://fronti-login-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "fronti-login",
+            storageBucket: "fronti-login.firebasestorage.app",
+            messagingSenderId: "403453632821",
+            appId: "1:403453632821:web:7583bc00458748e447ac7c",
+            measurementId: "G-GH16N4RN8S"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Get UIID from URL path
+        const pathSegments = window.location.pathname.split('/');
+        const uiid = pathSegments.pop() || pathSegments.pop(); // Handle trailing slash
+
+        async function loadBlog() {
+            if (!uiid) {
+                document.querySelector('.blog-container').innerHTML = '<div class="error">No UIID found in URL.</div>';
+                return;
+            }
+            // Firebase does not allow . # $ [ ] in keys
+            const safeUiid = uiid.replace(/[.#$\[\]]/g, '_');
+            try {
+                const snapshot = await get(ref(db, 'profiles/' + safeUiid));
+                if (!snapshot.exists()) {
+                    document.querySelector('.blog-container').innerHTML = `<div class="error">No profile found for UIID: ${uiid}</div>`;
+                    return;
+                }
+                const data = snapshot.val();
+
+                // Populate the page with the data
+                const blog = data.output.blog;
+                document.title = blog.title || 'Blog';
+                document.querySelector("meta[name='description']").setAttribute("content", blog.subtitle || '');
+                document.querySelector("meta[property='og:title']").setAttribute("content", blog.title || '');
+                document.querySelector("meta[property='og:description']").setAttribute("content", blog.subtitle || '');
+                document.querySelector("meta[property='og:url']").setAttribute("content", window.location.href);
+                document.querySelector("meta[name='twitter:title']").setAttribute("content", blog.title || '');
+                document.querySelector("meta[name='twitter:description']").setAttribute("content", blog.subtitle || '');
+
+                document.querySelector('.uiid').textContent = 'UIID: ' + (data.output.uiid || uiid);
+                document.querySelector('h1').textContent = blog.title || 'No Title';
+                document.querySelector('h3').textContent = blog.subtitle || '';
+                document.querySelector('.blog-container div:nth-of-type(4)').textContent = blog.body || '';
+
+            } catch (error) {
+                document.querySelector('.blog-container').innerHTML = `<div class="error">Error loading profile: ${error.message}</div>`;
+            }
+        }
+        loadBlog();
+    </script>
 </body>
 </html>
