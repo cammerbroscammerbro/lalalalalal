@@ -69,21 +69,20 @@
                     return;
                 }
                 const data = snapshot.val();
-
+                
                 // Populate the page with the data
-                const blog = data.output.blog;
-                document.title = blog.title || 'Blog';
-                document.querySelector("meta[name='description']").setAttribute("content", blog.subtitle || '');
-                document.querySelector("meta[property='og:title']").setAttribute("content", blog.title || '');
-                document.querySelector("meta[property='og:description']").setAttribute("content", blog.subtitle || '');
+                document.title = data.title || 'Blog';
+                document.querySelector("meta[name='description']").setAttribute("content", data.subtitle || '');
+                document.querySelector("meta[property='og:title']").setAttribute("content", data.title || '');
+                document.querySelector("meta[property='og:description']").setAttribute("content", data.subtitle || '');
                 document.querySelector("meta[property='og:url']").setAttribute("content", window.location.href);
-                document.querySelector("meta[name='twitter:title']").setAttribute("content", blog.title || '');
-                document.querySelector("meta[name='twitter:description']").setAttribute("content", blog.subtitle || '');
+                document.querySelector("meta[name='twitter:title']").setAttribute("content", data.title || '');
+                document.querySelector("meta[name='twitter:description']").setAttribute("content", data.subtitle || '');
 
-                document.querySelector('.uiid').textContent = 'UIID: ' + (data.output.uiid || uiid);
-                document.querySelector('h1').textContent = blog.title || 'No Title';
-                document.querySelector('h3').textContent = blog.subtitle || '';
-                document.getElementById('blogBody').textContent = blog.body || '';
+                document.querySelector('.uiid').textContent = 'UIID: ' + (data.uiid || uiid);
+                document.querySelector('h1').textContent = data.title || 'No Title';
+                document.querySelector('h3').textContent = data.subtitle || '';
+                document.getElementById('blogBody').textContent = data.body || '';
 
             } catch (error) {
                 document.querySelector('.blog-container').innerHTML = `<div class="error">Error loading profile: ${error.message}</div>`;
