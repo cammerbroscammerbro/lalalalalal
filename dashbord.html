@@ -365,7 +365,7 @@
                 });
                 const result = await response.json();
                 if (result.success) {
-                    const safeUiid = result.uiid.replace(/[.#$\[\]]/g, '_');
+                    const safeUiid = result.uiid.replace(/[.#$\[\]\s]/g, '_');
                     set(ref(db, 'profiles/' + safeUiid), result.output)
                         .then(() => {
                             document.getElementById('loadingMsg').style.display = 'none';
