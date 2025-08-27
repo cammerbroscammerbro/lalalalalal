@@ -3,18 +3,11 @@ import os
 import base64
 import requests
 import json
-from flask import Flask, request, jsonify, send_file, send_from_directory, render_template_string
+from flask import Flask, request, jsonify, send_file, send_from_directory, render_template_string, render_template
 
 # Correct import for google-generativeai
 import google.generativeai as genai
 from google.generativeai import types
-import os
-import base64
-import requests
-import json
-from flask import Flask, request, jsonify, send_file, send_from_directory
-# Removed incorrect import statements for google.generativeai
-
 
 API_KEY = "AIzaSyB8WRNReeJkKJfUkmU2WuyztBYFEmNl2Vg"
 DEV_API_KEY = "n51PDg1CMRSWGYFnnWXBfvKV"
@@ -72,7 +65,7 @@ profile_template_html = r'''
                     return;
                 }
                 // Firebase does not allow . # $ [ ] in keys
-                const safeUiid = uiid.replace(/[.#$\[\]]/g, '_');
+                const safeUiid = uiid.replace(/[.#$\[\]\s]/g, '_');
                 try {
                     const snapshot = await get(ref(db, 'profiles/' + safeUiid));
                     if (!snapshot.exists()) {
@@ -80,10 +73,10 @@ profile_template_html = r'''
                         return;
                     }
                     const data = snapshot.val();
-                    document.getElementById('uiidDisplay').textContent = 'UIID: ' + (data.output?.uiid || uiid);
-                    document.getElementById('blogTitle').textContent = data.output?.blog?.title || 'No Title';
-                    document.getElementById('blogSubtitle').textContent = data.output?.blog?.subtitle || '';
-                    document.getElementById('blogBody').innerHTML = (data.output?.blog?.body || '').replace(/\n/g, '<br>');
+                    document.getElementById('uiidDisplay').textContent = 'UIID: ' + (data.uiid || uiid);
+                    document.getElementById('blogTitle').textContent = data.blog?.title || 'No Title';
+                    document.getElementById('blogSubtitle').textContent = data.blog?.subtitle || '';
+                    document.getElementById('blogBody').innerHTML = (data.blog?.body || '').replace(/\n/g, '<br>');
                 } catch (error) {
                     document.getElementById('profileContainer').innerHTML = `<div class="error">Error loading profile: ${error.message}</div>`;
                 }
@@ -98,9 +91,6 @@ profile_template_html = r'''
 def serve_profile(uiid):
         # Pass UIID to frontend template
         return render_template_string(profile_template_html, uiid=uiid)
-
-
-app = Flask(__name__)
 
 # Store blogs by uiid
 blogs_by_uiid = {}
@@ -121,28 +111,42 @@ def create_profile():
     if not uiid:
         name = data.get('name', '')
         uiid = generate_uiid_from_name(name)
-    import uuid
-    profile_uuid = str(uuid.uuid4())
+    
     blog_content = generate_ai_blog(data)
-    blogs_by_uiid[uiid] = blog_content
-    # Do NOT save to Firebase in backend
-    profile_data = {
-        'input': data,
-        'output': {
-            'uuid': profile_uuid,
-            'uiid': uiid,
-            'name': data.get('name', ''),
-            'about': data.get('about', ''),
-            'profile_url': f'/profile/{uiid}',
-            'blog': blog_content
-        }
+    
+    # SEO meta tags
+    title = blog_content.get('title', '')
+    subtitle = blog_content.get('subtitle', '')
+    body = blog_content.get('body', '')
+    meta_title = title if title else f"{uiid} - TagMe.AI Blog"
+    meta_description = subtitle if subtitle else (body[:160].replace('\n', ' ') if body else f"Discover {uiid} on TagMe.AI")
+    canonical_url = f"https://fronti.tech/tagmeai/blog/{uiid}"
+    og_title = meta_title
+    og_description = meta_description
+    og_url = canonical_url
+
+    blog_data_to_save = {
+        'uiid': uiid,
+        'title': title,
+        'subtitle': subtitle,
+        'body': body,
+        'meta_title': meta_title,
+        'meta_description': meta_description,
+        'canonical_url': canonical_url,
+        'og_title': og_title,
+        'og_description': og_description,
+        'og_url': og_url,
     }
+    
+    # The blogs_by_uiid dictionary is used by the old /blog/<uiid> endpoint.
+    # I will keep it for now to avoid breaking anything, but it should be removed later.
+    blogs_by_uiid[uiid] = blog_content
+
     return jsonify({
         'success': True,
         'uiid': uiid,
-        'profile_url': f'/profile/{uiid}',
         'blog_url': f'/blog/{uiid}',
-        'output': profile_data['output']
+        'output': blog_data_to_save
     })
 
 # Route to show the blog for a specific uiid
@@ -161,45 +165,18 @@ def show_blog(uiid):
     og_title = meta_title
     og_description = meta_description
     og_url = canonical_url
-    # Render HTML with SEO tags
-    html = f"""
-    <!DOCTYPE html>
-    <html lang='en'>
-    <head>
-        <meta charset='UTF-8'>
-        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-        <title>{meta_title}</title>
-        <meta name='description' content='{meta_description}'>
-        <link rel='canonical' href='{canonical_url}'>
-        <!-- Open Graph -->
-        <meta property='og:title' content='{og_title}'>
-        <meta property='og:description' content='{og_description}'>
-        <meta property='og:url' content='{og_url}'>
-        <meta property='og:type' content='article'>
-        <!-- Twitter Card -->
-        <meta name='twitter:card' content='summary_large_image'>
-        <meta name='twitter:title' content='{og_title}'>
-        <meta name='twitter:description' content='{og_description}'>
-        <style>
-            body {{ font-family:sans-serif; max-width:700px; margin:40px auto; background:#fafbfc; }}
-            .blog-container {{ background:white; border-radius:20px; box-shadow:0 10px 30px rgba(0,0,0,0.07); padding:40px; }}
-            h1 {{ font-size:2.2em; margin-bottom:10px; }}
-            h3 {{ color:#666; margin-bottom:30px; }}
-            .uiid {{ font-size:1em; color:#667eea; margin-bottom:20px; font-family:monospace; }}
-        </style>
-    </head>
-    <body>
-        <div class='blog-container'>
-            <div class='uiid'>UIID: {uiid}</div>
-            <h1>{title}</h1>
-            <h3>{subtitle}</h3>
-            <div style='margin-top:30px;'>{body.replace('\n', '<br>')}</div>
-            <a href='/' style='display:block;margin-top:40px;color:#667eea;'>Back to Profile Form</a>
-        </div>
-    </body>
-    </html>
-    """
-    return html
+    
+    return render_template('blog.html',
+                           meta_title=meta_title,
+                           meta_description=meta_description,
+                           canonical_url=canonical_url,
+                           og_title=og_title,
+                           og_description=og_description,
+                           og_url=og_url,
+                           uiid=uiid,
+                           title=title,
+                           subtitle=subtitle,
+                           body=body)
 
 @app.route('/generate-blog', methods=['POST'])
 def generate_blog():
@@ -229,7 +206,7 @@ def generate_blog():
 
     try:
         genai.configure(api_key=API_KEY)
-        model = genai.GenerativeModel("gemini-2.5-flash-lite")
+        model = genai.GenerativeModel("gemini-1.5-flash")
         print("Calling Gemini API for /generate-blog...")
         print(f"Prompt being sent:\n{prompt}")
         response = model.generate_content(prompt)
@@ -278,50 +255,6 @@ def generate_blog():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
-##def publish_to_dev_to(blog_content, author_name):#
-    #"""Publish blog content to DEV.to"""
-    #try:
-        #DEV_API_KEY = os.getenv('DEV_API_KEY', 'n51PDg1CMRSWGYFnnWXBfvKV')
-        #headers = {
-            #"api-key": DEV_API_KEY,
-            #"Content-Type": "application/json"
-        #}
-        
-        # Compose markdown body for DEV.to
-        #body_markdown = f"# {blog_content.get('title', '')}\n\n"
-        #if blog_content.get('subtitle'):
-            #body_markdown += f"*{blog_content['subtitle']}*\n\n"
-        
-        # Convert body to proper markdown format
-        #body_text = blog_content.get('body', '')
-        # Ensure proper paragraph breaks for markdown
-        #body_text = body_text.replace('\n\n', '\n\n')
-        #body_markdown += body_text
-        
-        # Add TagMe.AI signature
-        #body_markdown += f"\n\n---\n\n*This profile was created using [TagMe.AI](https://tagme.ai) - Your AI-Readable Digital Identity*"
-        
-        # Get UIID from blog content for canonical URL
-        #uiid = blog_content.get('uiid', '')
-        #       canonical_url = f"https://fronti.tech/tagmeai/{uiid}" if uiid else ""
-        
-        # Sanitize title for safety (remove code fences/backticks)
-        #safe_title = (blog_content.get('title', f'Meet {author_name} - TagMe.AI Profile') or '').replace('```', '').replace('`', '').strip()
-        #article_data = {
-            #"article": {
-                #"title": safe_title,
-                #"published": True,
-                #"body_markdown": body_markdown,
-                # DEV.to tags must be alphanumeric
-                #"tags": ['ai', 'digitalidentity', 'tagmeai', 'profile'],
-                #"series": 'TagMe AI Profiles',
-                #"canonical_url": canonical_url
-            #}
-        #}
-        
-        #print(f"Publishing to DEV.to with API key: {DEV_API_KEY[:10]}...")
-        #print(f"Article title: {article_data['article']['title']}")
-     
 def extract_blog_parts(text):
     """Parse model text output into a dict with title, subtitle, body."""
     import re
@@ -472,7 +405,7 @@ def generate_ai_blog(profile_data):
     
     try:
         genai.configure(api_key=API_KEY)
-        model = genai.GenerativeModel("gemini-2.5-pro")
+        model = genai.GenerativeModel("gemini-1.5-flash")
         print("Calling Gemini API...")
         print(f"Prompt being sent:\n{prompt}")
         response = model.generate_content(prompt)
@@ -484,7 +417,11 @@ def generate_ai_blog(profile_data):
                     blog_text = candidate.content.parts[0].text
                     break
         if not blog_text:
-            print("Gemini response did not return any valid text. Returning fallback content...")
+            print("Gemini response did not return any valid text.")
+            try:
+                print(f"Prompt feedback: {response.prompt_feedback}")
+            except Exception as e:
+                print(f"Could not print prompt feedback: {e}")
             raise ValueError("No valid text returned from Gemini API.")
         print(f"Gemini response received: {len(blog_text)} characters")
         print(f"Response preview: {blog_text[:200]}...")
@@ -512,55 +449,12 @@ def generate_ai_blog(profile_data):
             'body': f"Welcome to the AI-readable profile of {profile_data.get('name', 'this person')}. This profile is structured for AI systems and search engines to discover and understand."
         }
 
-@app.route('/profile/<uiid>')
-def view_profile(uiid):
-    """View a TagMe.AI profile"""
-    # For now, return a simple profile page
-    # In a full implementation, you'd fetch from database
-    profile_html = f"""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>TagMe.AI Profile - {uiid}</title>
-        <style>
-            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }}
-            .container {{ max-width: 800px; margin: 0 auto; background: white; min-height: 100vh; box-shadow: 0 0 20px rgba(0,0,0,0.1); }}
-            .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 20px; text-align: center; }}
-            .profile-section {{ padding: 40px 20px; }}
-            .uuid-display {{ background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center; border: 2px dashed #667eea; font-family: monospace; }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>TagMe.AI Profile</h1>
-                <p>AI-Readable Digital Identity</p>
-            </div>
-            <div class="profile-section">
-                <div class="uuid-display">
-                    <strong>TagMe UIID:</strong><br>
-                    {uiid}
-                </div>
-                <h2>Profile Information</h2>
-                <p>This is a TagMe.AI profile with AI-readable structured data.</p>
-                <p>Profile data would be loaded from the database in a full implementation.</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-    return profile_html
-
 @app.route('/api/profiles')
 def list_profiles():
     """List all TagMe profiles (for AI directory)"""
     # For now, return empty list
     # In a full implementation, you'd fetch from database
     return jsonify([])
-
-
 
 def generate_uiid_from_name(name):
     """Generate UIID from name"""
@@ -583,6 +477,10 @@ def clean_json_response(text):
     """Clean the response to extract only valid JSON"""
     import re
     
+    # Remove markdown fences
+    text = re.sub(r'^```json\s*', '', text.strip())
+    text = re.sub(r'```\s*$', '', text.strip())
+
     # Try to find JSON object in the text
     json_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
     matches = re.findall(json_pattern, text, re.DOTALL)
@@ -609,7 +507,7 @@ def test_gemini_api():
     try:
         print("Testing Gemini API...")
         genai.configure(api_key=API_KEY)
-        model = genai.GenerativeModel("gemini-2.5-pro")
+        model = genai.GenerativeModel("gemini-1.5-flash")
         response = model.generate_content("Say 'Hello, Gemini is working!'")
         # Check if response contains valid candidates and parts
         if hasattr(response, 'candidates') and response.candidates:
@@ -636,6 +534,3 @@ if __name__ == "__main__":
         print("WARNING: Gemini API is not working. Blog generation will use fallback content.")
     
     app.run(debug=True)
-
-
-

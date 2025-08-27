@@ -409,12 +409,11 @@
                 }
             }
 
-            // Show submit only on last step
             document.getElementById('tagmeForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const submitBtn = document.getElementById('submitBtn');
                 submitBtn.disabled = true;
-                // Collect form data
+                
                 const name = document.getElementById('name').value.trim();
                 const about = document.getElementById('about').value.trim();
                 if (!name || !about) {
@@ -431,10 +430,13 @@
                     instagram: document.getElementById('instagram').value.trim(),
                     other: document.getElementById('other').value.trim()
                 };
-                // Immediately redirect to dashboard with UIID
+
+                // Save form data to sessionStorage
+                sessionStorage.setItem('tagmeFormData', JSON.stringify(formData));
+
+                // Redirect to dashboard
                 window.location.href = `/dashbord.html?uiid=${encodeURIComponent(formData.uiid)}`;
             });
         </script>
 </body>
 </html>
-
