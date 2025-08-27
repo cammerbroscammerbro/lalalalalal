@@ -61,7 +61,7 @@
                 return;
             }
             // Firebase does not allow . # $ [ ] in keys
-            const safeUiid = uiid.replace(/[.#$\[\]]/g, '_');
+            const safeUiid = uiid.replace(/[.#$\[\]\s]/g, '_');
             try {
                 const snapshot = await get(ref(db, 'profiles/' + safeUiid));
                 if (!snapshot.exists()) {
@@ -69,7 +69,7 @@
                     return;
                 }
                 const data = snapshot.val();
-                
+
                 // Populate the page with the data
                 document.title = data.title || 'Blog';
                 document.querySelector("meta[name='description']").setAttribute("content", data.subtitle || '');

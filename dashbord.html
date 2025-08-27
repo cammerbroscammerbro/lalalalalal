@@ -369,9 +369,9 @@
                     set(ref(db, 'profiles/' + safeUiid), result.output)
                         .then(() => {
                             document.getElementById('loadingMsg').style.display = 'none';
-                            if (result.output && result.output.blog) {
-                                blogData = result.output.blog;
-                                profileData = result.output;
+                            if (result.output) {
+                                blogData = result.output;
+                                profileData = formData; // Use formData for the ID card
                                 showIdCard(profileData);
                                 showDashboard();
                             }

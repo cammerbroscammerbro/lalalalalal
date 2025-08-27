@@ -111,9 +111,9 @@ def create_profile():
     if not uiid:
         name = data.get('name', '')
         uiid = generate_uiid_from_name(name)
-    
+
     blog_content = generate_ai_blog(data)
-    
+
     # SEO meta tags
     title = blog_content.get('title', '')
     subtitle = blog_content.get('subtitle', '')
@@ -137,7 +137,7 @@ def create_profile():
         'og_description': og_description,
         'og_url': og_url,
     }
-    
+
     # The blogs_by_uiid dictionary is used by the old /blog/<uiid> endpoint.
     # I will keep it for now to avoid breaking anything, but it should be removed later.
     blogs_by_uiid[uiid] = blog_content
@@ -165,7 +165,7 @@ def show_blog(uiid):
     og_title = meta_title
     og_description = meta_description
     og_url = canonical_url
-    
+
     return render_template('blog.html',
                            meta_title=meta_title,
                            meta_description=meta_description,
