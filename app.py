@@ -65,7 +65,7 @@ profile_template_html = r'''
                     return;
                 }
                 // Firebase does not allow . # $ [ ] in keys
-                const safeUiid = uiid.replace(/[.#$\[\]]/g, '_');
+                const safeUiid = uiid.replace(/[.#$\[\]\s]/g, '_');
                 try {
                     const snapshot = await get(ref(db, 'profiles/' + safeUiid));
                     if (!snapshot.exists()) {
@@ -73,10 +73,10 @@ profile_template_html = r'''
                         return;
                     }
                     const data = snapshot.val();
-                    document.getElementById('uiidDisplay').textContent = 'UIID: ' + (data.output?.uiid || uiid);
-                    document.getElementById('blogTitle').textContent = data.output?.blog?.title || 'No Title';
-                    document.getElementById('blogSubtitle').textContent = data.output?.blog?.subtitle || '';
-                    document.getElementById('blogBody').innerHTML = (data.output?.blog?.body || '').replace(/\n/g, '<br>');
+                    document.getElementById('uiidDisplay').textContent = 'UIID: ' + (data.uiid || uiid);
+                    document.getElementById('blogTitle').textContent = data.blog?.title || 'No Title';
+                    document.getElementById('blogSubtitle').textContent = data.blog?.subtitle || '';
+                    document.getElementById('blogBody').innerHTML = (data.blog?.body || '').replace(/\n/g, '<br>');
                 } catch (error) {
                     document.getElementById('profileContainer').innerHTML = `<div class="error">Error loading profile: ${error.message}</div>`;
                 }
@@ -111,34 +111,42 @@ def create_profile():
     if not uiid:
         name = data.get('name', '')
         uiid = generate_uiid_from_name(name)
-    import uuid
-    profile_uuid = str(uuid.uuid4())
+    
     blog_content = generate_ai_blog(data)
+    
+    # SEO meta tags
+    title = blog_content.get('title', '')
+    subtitle = blog_content.get('subtitle', '')
+    body = blog_content.get('body', '')
+    meta_title = title if title else f"{uiid} - TagMe.AI Blog"
+    meta_description = subtitle if subtitle else (body[:160].replace('\n', ' ') if body else f"Discover {uiid} on TagMe.AI")
+    canonical_url = f"https://fronti.tech/tagmeai/blog/{uiid}"
+    og_title = meta_title
+    og_description = meta_description
+    og_url = canonical_url
+
+    blog_data_to_save = {
+        'uiid': uiid,
+        'title': title,
+        'subtitle': subtitle,
+        'body': body,
+        'meta_title': meta_title,
+        'meta_description': meta_description,
+        'canonical_url': canonical_url,
+        'og_title': og_title,
+        'og_description': og_description,
+        'og_url': og_url,
+    }
+    
+    # The blogs_by_uiid dictionary is used by the old /blog/<uiid> endpoint.
+    # I will keep it for now to avoid breaking anything, but it should be removed later.
     blogs_by_uiid[uiid] = blog_content
 
-    print("--- BLOG CONTENT ---")
-    print(blog_content)
-    print(type(blog_content))
-    print("--- END BLOG CONTENT ---")
-
-    # Do NOT save to Firebase in backend
-    profile_data = {
-        'input': data,
-        'output': {
-            'uuid': profile_uuid,
-            'uiid': uiid,
-            'name': data.get('name', ''),
-            'about': data.get('about', ''),
-            'profile_url': f'/profile/{uiid}',
-            'blog': blog_content
-        }
-    }
     return jsonify({
         'success': True,
         'uiid': uiid,
-        'profile_url': f'/profile/{uiid}',
         'blog_url': f'/blog/{uiid}',
-        'output': profile_data['output']
+        'output': blog_data_to_save
     })
 
 # Route to show the blog for a specific uiid
@@ -157,7 +165,7 @@ def show_blog(uiid):
     og_title = meta_title
     og_description = meta_description
     og_url = canonical_url
-
+    
     return render_template('blog.html',
                            meta_title=meta_title,
                            meta_description=meta_description,
